@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Portfolio Assistant</title>
+</head>
+<body>
+  <header>
+    <span class="logo">📊</span>
+    <h1>Financial Portfolio Assistant</h1>
+    <span class="badge">AG-UI · Strands · Claude</span>
+  </header>
+
+  <div id="chat-window"></div>
+
+  <div class="suggestions">
+    <div class="suggestion" data-text="Summarize all portfolios">Summarize all portfolios</div>
+    <div class="suggestion" data-text="Create a pie chart of tech portfolio holdings">Create a pie chart of tech portfolio holdings</div>
+    <div class="suggestion" data-text="Show AAPL price history as a line chart">Show AAPL price history as a line chart</div>
+    <div class="suggestion" data-text="Table of balanced portfolio holdings">Table of balanced portfolio holdings</div>
+    <div class="suggestion" data-text="Compare performance of all tech stocks">Compare performance of all tech stocks</div>
+  </div>
+
+  <div id="input-area">
+    <textarea id="user-input" rows="1" placeholder="Ask about your portfolio…"></textarea>
+    <button id="send-btn">Send</button>
+  </div>
+
+  <script type="module" src="/frontend/main.ts"></script>
+</body>
+</html>

@@ -36,7 +36,7 @@ from agents.orchestrator import orchestrator
 from tools.chart_tools import CHART_STORE
 
 app = FastAPI(title="Financial Portfolio Assistant")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
 
 encoder = EventEncoder()
 
@@ -208,11 +208,6 @@ async def chat(req: ChatRequest):
 
 
 # ── Static file serving ───────────────────────────────────────────────────────
-
-@app.get("/")
-async def index():
-    return FileResponse("static/index.html")
-
 
 @app.get("/chart/{chart_id}")
 async def serve_chart(chart_id: str):
