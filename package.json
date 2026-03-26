@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "server": ".venv/bin/python3 server.py"
+    "server": "venv/bin/python3 server.py"
   },
   "devDependencies": {
     "typescript": "~5.9.3",
