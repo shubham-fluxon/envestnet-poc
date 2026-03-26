@@ -1,0 +1,9 @@
+strands-agents
+strands-agents-tools
+anthropic
+python-dotenv
+fastapi
+uvicorn[standard]
+ag-ui-protocol
+plotly
+pandas

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Financial Portfolio Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", "Segoe UI", sans-serif;
+      background: #1e1e2e;
+      color: #cdd6f4;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 24px;
+      background: #181825;
+      border-bottom: 1px solid #313244;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header .logo { font-size: 22px; }
+    header h1 { font-size: 18px; font-weight: 600; color: #cdd6f4; }
+    header .badge {
+      margin-left: auto;
+      font-size: 11px;
+      color: #a6e3a1;
+      background: #1e3a2f;
+      border: 1px solid #a6e3a1;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    #chat-window {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .message {
+      max-width: 780px;
+      width: fit-content;
+      padding: 12px 16px;
+      border-radius: 12px;
+      line-height: 1.6;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .message.user {
+      background: #313244;
+      color: #cdd6f4;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .message.assistant {
+      background: #181825;
+      border: 1px solid #313244;
+      color: #cdd6f4;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .message.assistant .label {
+      font-size: 11px;
+      color: #89b4fa;
+      font-weight: 600;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Thinking / tool-call indicator */
+    .indicator {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #6c7086;
+      font-style: italic;
+      padding: 4px 0;
+    }
+    .indicator .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #89b4fa;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Tool call pill */
+    .tool-pill {
+      align-self: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #2a2a3e;
+      border: 1px solid #45475a;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #fab387;
+    }
+    .tool-pill .icon { font-size: 13px; }
+
+    .chart-wrap {
+      align-self: flex-start;
+      width: 100%;
+      max-width: 820px;
+      background: #181825;
+      border: 1px solid #313244;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .chart-wrap iframe {
+      width: 100%;
+      height: 440px;
+      border: none;
+      display: block;
+      background: #1e1e2e;
+    }
+
+    #input-area {
+      padding: 16px 24px;
+      background: #181825;
+      border-top: 1px solid #313244;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    #user-input {
+      flex: 1;
+      background: #313244;
+      border: 1px solid #45475a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #cdd6f4;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      max-height: 160px;
+      line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+    #user-input:focus { border-color: #89b4fa; }
+    #user-input::placeholder { color: #585b70; }
+
+    #send-btn {
+      background: #89b4fa;
+      color: #1e1e2e;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    #send-btn:hover { background: #b4d0fa; }
+    #send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 24px 12px;
+      background: #181825;
+    }
+    .suggestion {
+      background: #313244;
+      border: 1px solid #45475a;
+      color: #cdd6f4;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .suggestion:hover { background: #45475a; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #45475a; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">📊</span>
+  <h1>Financial Portfolio Assistant</h1>
+  <span class="badge">AG-UI · Strands · Claude</span>
+</header>
+
+<div id="chat-window">
+  <div class="message assistant">
+    <div class="label">Assistant</div>
+    Hello! I can help you analyze your investment portfolios and create visualizations. Try asking me about your holdings, performance, or request a chart.
+  </div>
+</div>
+
+<div class="suggestions">
+  <div class="suggestion" onclick="suggest(this)">Summarize all portfolios</div>
+  <div class="suggestion" onclick="suggest(this)">Create a pie chart of tech portfolio holdings</div>
+  <div class="suggestion" onclick="suggest(this)">Show AAPL price history as a line chart</div>
+  <div class="suggestion" onclick="suggest(this)">Table of balanced portfolio holdings</div>
+  <div class="suggestion" onclick="suggest(this)">Compare performance of all tech stocks</div>
+</div>
+
+<div id="input-area">
+  <textarea id="user-input" rows="1" placeholder="Ask about your portfolio…"></textarea>
+  <button id="send-btn" onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+  const chatWindow = document.getElementById("chat-window");
+  const input = document.getElementById("user-input");
+  const sendBtn = document.getElementById("send-btn");
+
+  // Conversation history sent to /agent (AG-UI RunAgentInput format)
+  const messages = [];
+  let threadId = crypto.randomUUID();
+
+  // Auto-resize textarea
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 160) + "px";
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  function suggest(el) {
+    input.value = el.textContent;
+    input.dispatchEvent(new Event("input"));
+    input.focus();
+  }
+
+  // ── DOM helpers ─────────────────────────────────────────────────────────────
+
+  function appendUserMessage(text) {
+    const div = document.createElement("div");
+    div.className = "message user";
+    div.textContent = text;
+    chatWindow.appendChild(div);
+    scroll();
+  }
+
+  function createAssistantBubble() {
+    const div = document.createElement("div");
+    div.className = "message assistant";
+    const label = document.createElement("div");
+    label.className = "label";
+    label.textContent = "Assistant";
+    const content = document.createElement("span");
+    content.id = "streaming-content";
+    div.appendChild(label);
+    div.appendChild(content);
+    chatWindow.appendChild(div);
+    scroll();
+    return content;
+  }
+
+  function showIndicator(text) {
+    removeIndicator();
+    const el = document.createElement("div");
+    el.className = "indicator";
+    el.id = "run-indicator";
+    el.innerHTML = `<span class="dot"></span><span>${text}</span>`;
+    chatWindow.appendChild(el);
+    scroll();
+  }
+
+  function removeIndicator() {
+    document.getElementById("run-indicator")?.remove();
+  }
+
+  // Tool-call pills keyed by toolCallId
+  const toolPills = {};
+
+  function showToolPill(toolCallId, toolName) {
+    const el = document.createElement("div");
+    el.className = "tool-pill";
+    el.id = `tool-${toolCallId}`;
+    el.innerHTML = `<span class="icon">⚙️</span><span>Calling <strong>${toolName}</strong>…</span>`;
+    chatWindow.appendChild(el);
+    toolPills[toolCallId] = el;
+    scroll();
+  }
+
+  function removeToolPill(toolCallId) {
+    toolPills[toolCallId]?.remove();
+    delete toolPills[toolCallId];
+  }
+
+  function renderCharts(text) {
+    const regex = /CHART::([a-f0-9\-]{36})/g;
+    const seen = new Set();
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const chartId = match[1];
+      if (seen.has(chartId)) continue;
+      seen.add(chartId);
+      const wrap = document.createElement("div");
+      wrap.className = "chart-wrap";
+      const iframe = document.createElement("iframe");
+      iframe.src = `/chart/${chartId}`;
+      iframe.title = "Chart";
+      wrap.appendChild(iframe);
+      chatWindow.appendChild(wrap);
+    }
+    if (seen.size > 0) scroll();
+  }
+
+  function scroll() {
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  // ── AG-UI SSE consumer ──────────────────────────────────────────────────────
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Clear old charts
+    document.querySelectorAll(".chart-wrap").forEach(el => el.remove());
+
+    appendUserMessage(text);
+    messages.push({ id: crypto.randomUUID(), role: "user", content: text });
+
+    input.value = "";
+    input.style.height = "auto";
+    sendBtn.disabled = true;
+
+    showIndicator("Thinking…");
+
+    // Build AG-UI RunAgentInput
+    const body = {
+      thread_id: threadId,
+      run_id: crypto.randomUUID(),
+      messages: messages,
+    };
+
+    let assistantContent = null; // span element for streaming text
+    let fullText = "";
+
+    try {
+      const res = await fetch("/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        removeIndicator();
+        appendErrorBubble(`HTTP ${res.status}: ${res.statusText}`);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // keep incomplete line
+
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          const raw = line.slice(5).trim();
+          if (!raw) continue;
+
+          let evt;
+          try { evt = JSON.parse(raw); } catch { continue; }
+
+          switch (evt.type) {
+            case "RUN_STARTED":
+              // already showing indicator
+              break;
+
+            case "TEXT_MESSAGE_START":
+              removeIndicator();
+              assistantContent = createAssistantBubble();
+              fullText = "";
+              break;
+
+            case "TEXT_MESSAGE_CONTENT":
+              if (assistantContent) {
+                fullText += evt.delta;
+                assistantContent.textContent = fullText;
+                scroll();
+              }
+              break;
+
+            case "TEXT_MESSAGE_END":
+              // text is complete; check for chart paths
+              renderCharts(fullText);
+              // Store assistant message for next turn
+              messages.push({ id: evt.messageId || crypto.randomUUID(), role: "assistant", content: fullText });
+              assistantContent = null;
+              break;
+
+            case "TOOL_CALL_START":
+              showToolPill(evt.toolCallId, evt.toolCallName);
+              break;
+
+            case "TOOL_CALL_END":
+              removeToolPill(evt.toolCallId);
+              break;
+
+            case "RUN_FINISHED":
+              removeIndicator();
+              break;
+
+            case "RUN_ERROR":
+              removeIndicator();
+              appendErrorBubble(evt.message || "Unknown error");
+              break;
+          }
+        }
+      }
+
+    } catch (err) {
+      removeIndicator();
+      appendErrorBubble(`Network error: ${err.message}`);
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  function appendErrorBubble(msg) {
+    const div = document.createElement("div");
+    div.className = "message assistant";
+    div.style.borderColor = "#f38ba8";
+    div.style.color = "#f38ba8";
+    div.innerHTML = `<div class="label" style="color:#f38ba8">Error</div>${msg}`;
+    chatWindow.appendChild(div);
+    scroll();
+  }
+</script>
+</body>
+</html>
