@@ -19,6 +19,7 @@ Orchestrator Agent (Claude)
 ## Prerequisites
 
 - Python 3.10+
+- Node.js 18+
 - An [Anthropic API key](https://console.anthropic.com/)
 
 ## Setup
@@ -31,13 +32,14 @@ cd envestnet-poc
 
 **2. Create and activate a virtual environment**
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 **3. Install dependencies**
 ```bash
 pip install -r requirements.txt
+npm install
 ```
 
 **4. Add your Anthropic API key**
@@ -49,12 +51,19 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ## Running
 
-**Start the server**
+**Development** (two terminals):
 ```bash
-python server.py
+npm run server   # Backend on :8000
+npm run dev      # Vite dev server on :5173 (proxies API to :8000)
 ```
 
-Then open **http://localhost:8000** in your browser.
+Open **http://localhost:5173**.
+
+**Production**:
+```bash
+npm run build    # Build frontend to dist/
+npm run server   # Serves both API and dist/
+```
 
 ## Usage
 
@@ -71,10 +80,17 @@ Charts are rendered interactively in the browser (hover, zoom, pan).
 ## Project Structure
 
 ```
+├── index.html              # Vite entrypoint
+├── package.json            # Frontend deps & scripts
+├── vite.config.ts          # Vite config (dev proxy to :8000)
+├── tsconfig.json
 ├── server.py               # FastAPI server — AG-UI /agent endpoint
 ├── main.py                 # CLI entry point (terminal REPL)
 ├── requirements.txt
 ├── .env                    # API key (not committed)
+├── frontend/
+│   ├── main.ts         # Chat UI logic (AG-UI SSE consumer)
+│   └── style.css       # Styles
 ├── data/
 │   └── portfolio.json      # Dummy portfolio data (2 portfolios, 10 tickers)
 ├── agents/
@@ -82,11 +98,9 @@ Charts are rendered interactively in the browser (hover, zoom, pan).
 │   ├── data_agent.py       # Data analyst sub-agent
 │   ├── chart_agent.py      # Chart specialist sub-agent
 │   └── model.py            # Shared Anthropic model config
-├── tools/
-│   ├── data_tools.py       # Portfolio query tools
-│   └── chart_tools.py      # Plotly chart/table tools
-└── static/
-    └── index.html          # Browser UI
+└── tools/
+    ├── data_tools.py       # Portfolio query tools
+    └── chart_tools.py      # Plotly chart/table tools
 ```
 
 ## Tech Stack
@@ -98,4 +112,4 @@ Charts are rendered interactively in the browser (hover, zoom, pan).
 | Agent–UI protocol | [AG-UI](https://docs.ag-ui.com) |
 | Backend | FastAPI + Uvicorn |
 | Charts | Plotly (interactive, browser-rendered) |
-| Frontend | Vanilla HTML/CSS/JS |
+| Frontend | TypeScript + Vite + React | 
